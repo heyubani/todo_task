@@ -1,35 +1,85 @@
 import { Test, TestingModule } from '@nestjs/testing';
-
 import { AuthService } from './auth.service';
-import { AppModule } from '../app.module';
+import { UserRepository } from './user.repository';
+import { JwtService } from '@nestjs/jwt';
+import { UnauthorizedException } from '@nestjs/common';
 
-describe('UserService', () => {
-  let service: AuthService;
-  // const connection = getConnection();
-  // console.log('connection', connection);
+// Mock factory functions
+const mockUserRepository = () => ({
+  signUp: jest.fn(),
+  validateUserPassword: jest.fn(),
+});
+
+const mockJwtService = () => ({
+  signAsync: jest.fn(),
+});
+
+describe('AuthService', () => {
+  let authService: AuthService;
+  let userRepository;
+  let jwtService;
+
   beforeEach(async () => {
-    // if (connection.isConnected) {
-    //   await connection.close();
-    // }
     const module: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      providers: [
+        AuthService,
+        { provide: UserRepository, useFactory: mockUserRepository },
+        { provide: JwtService, useFactory: mockJwtService },
+      ],
     }).compile();
 
-    service = module.get<AuthService>(AuthService);
+    authService = module.get<AuthService>(AuthService);
+    userRepository = module.get<UserRepository>(UserRepository);
+    jwtService = module.get<JwtService>(JwtService);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  describe('signUp', () => {
+    it('should successfully sign up the user', async () => {
+      const mockAuthCredentialsDTO = {
+        firstname: 'John',
+        lastname: 'Doe',
+        username: 'testuser',
+        password: 'TestPass123',
+      };
+      userRepository.signUp.mockResolvedValue('Successfully signed up');
+      expect(await authService.signUp(mockAuthCredentialsDTO)).toEqual(
+        'Successfully signed up',
+      );
+    });
   });
 
-  it('should create a user', async () => {
-    const user = await service.signUp({
-      firstname: 'john',
-      lastname: 'doe',
-      username: 'jasjjas',
-      password: 'Password@1',
+  describe('signIn', () => {
+    it('should throw an UnauthorizedException if credentials are invalid', async () => {
+      userRepository.validateUserPassword.mockResolvedValue(null);
+      await expect(
+        authService.signIn({ username: 'testuser', password: 'wrongPassword' }),
+      ).rejects.toThrow(UnauthorizedException);
     });
 
-    expect(user).toBeDefined();
+    it('should return the access token if credentials are valid', async () => {
+      const mockUser = {
+        username: 'testuser',
+        firstname: 'Test',
+        lastname: 'User',
+        is_active: true,
+      };
+      userRepository.validateUserPassword.mockResolvedValue(mockUser);
+      jwtService.signAsync.mockResolvedValue('signedToken123');
+
+      const result = await authService.signIn({
+        username: 'testuser',
+        password: 'TestPass123',
+      });
+      expect(result).toEqual({
+        firstname: 'Test',
+        lastname: 'User',
+        username: 'testuser',
+        is_active: true,
+        accessToken: 'signedToken123',
+      });
+      expect(jwtService.signAsync).toHaveBeenCalledWith({
+        username: 'testuser',
+      });
+    });
   });
 });

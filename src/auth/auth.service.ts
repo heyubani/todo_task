@@ -13,7 +13,10 @@ export class AuthService {
   ) {}
 
   async signUp(authCredentialsDTO: AuthCredentialsDTO) {
-    return this.userRepository.signUp(authCredentialsDTO);
+    const data = await this.userRepository.signUp(authCredentialsDTO);
+    delete data.password;
+    delete data.salt;
+    return data;
   }
 
   async signIn(authSignInDTO: AuthSignInDTO): Promise<object> {

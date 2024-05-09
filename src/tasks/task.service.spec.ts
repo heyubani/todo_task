@@ -1,68 +1,107 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { plainToClass } from 'class-transformer';
-
 import { TasksService } from './tasks.service';
-import { AppModule } from '../app.module';
-import { Task } from './task.entity';
+import { TaskRepository } from './task.repository';
+import { NotFoundException } from '@nestjs/common';
+import { TaskStatus } from './task-status.enum';
+import { GetTasksFilterDTO } from './dto/get-task.dto';
+import { User } from '../auth/user.entity';
 
-describe('TaskService', () => {
-  let service: TasksService;
-  let taskId: number;
+const mockTaskRepository = () => ({
+  getTasks: jest.fn(),
+  findOne: jest.fn(),
+  createTask: jest.fn(),
+  softDelete: jest.fn(),
+  save: jest.fn(),
+});
+
+describe('TasksService', () => {
+  let tasksService: TasksService;
+  let taskRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      providers: [
+        TasksService,
+        { provide: TaskRepository, useFactory: mockTaskRepository },
+      ],
     }).compile();
 
-    service = module.get<TasksService>(TasksService);
+    tasksService = module.get<TasksService>(TasksService);
+    taskRepository = module.get<TaskRepository>(TaskRepository);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  describe('getTasks', () => {
+    it('should return all tasks from the repository', async () => {
+      taskRepository.getTasks.mockResolvedValue('someValue'); // Adjust the return value as needed
+      expect(
+        await tasksService.getTasks(new GetTasksFilterDTO(), new User()),
+      ).toBe('someValue');
+    });
   });
 
-  //   it('should create a task', async () => {
-  //     const task = await service.createTask(
-  //       plainToClass(Task, {
-  //         title: 'test title',
-  //         description: 'write more code',
-  //         due_date: '2024-06-01',
-  //       }),
-  //     );
+  describe('getTaskById', () => {
+    it('should retrieve and return a task', async () => {
+      const mockTask = { id: 123, title: 'Test Task' };
+      taskRepository.findOne.mockResolvedValue(mockTask);
 
-  //     expect(task).toBeDefined();
-  //     taskId = task.id;
-  //   });
+      const result = await tasksService.getTaskById(123, new User());
+      expect(result).toEqual(mockTask);
+    });
 
-  //   it('should get all todo lists', async () => {
-  //     const tasks = await service.getTasks({ toDoListId: 1, page: 1, limit: 3 });
+    it('should throw a NotFoundException if no task is found', async () => {
+      taskRepository.findOne.mockResolvedValue(null);
 
-  //     expect(tasks).toBeDefined();
-  //     expect(tasks.length).toBeGreaterThan(0);
-  //   });
+      await expect(tasksService.getTaskById(123, new User())).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 
-  //   it('should get single task', async () => {
-  //     const task = await service.findOne(taskId);
+  describe('createTask', () => {
+    it('should successfully create a new task', async () => {
+      const mockTask = {
+        title: 'Test Task',
+        description: 'Test Desc',
+        due_date: new Date('2024-05-09'),
+      };
+      taskRepository.createTask.mockResolvedValue(mockTask);
 
-  //     expect(task).toBeDefined();
-  //     expect(task).toHaveProperty('description');
-  //     expect(task).toHaveProperty('dueDate');
-  //     expect(task).toHaveProperty('status');
-  //   });
+      expect(await tasksService.createTask(mockTask, new User(), 1)).toEqual(
+        mockTask,
+      );
+    });
+  });
 
-  //   it('should update task', async () => {
-  //     const task = await service.update(taskId, {
-  //       description: 'new description',
-  //     });
+  describe('deleteTask', () => {
+    it('should delete the task if it exists', async () => {
+      taskRepository.softDelete.mockResolvedValue({ affected: 1 });
 
-  //     expect(task).toBeDefined();
-  //     expect(task.affected).toEqual(1);
-  //   });
+      await tasksService.deleteTask(1); // No return value to test
+      expect(taskRepository.softDelete).toHaveBeenCalledWith(1);
+    });
 
-  //   it('should delete task list', async () => {
-  //     const task = await service.remove(taskId);
+    it('should throw a NotFoundException if no task is found', async () => {
+      taskRepository.softDelete.mockResolvedValue({ affected: 0 });
 
-  //     expect(task).toBeDefined();
-  //     expect(task.affected).toEqual(1);
-  //   });
+      await expect(tasksService.deleteTask(1)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('updateTaskStatus', () => {
+    it('should update the status of the task', async () => {
+      const save = jest.fn().mockResolvedValue(true);
+      const mockTask = { id: 123, status: TaskStatus.OPEN, save };
+      taskRepository.findOne.mockResolvedValue(mockTask);
+
+      const updatedTask = await tasksService.updateTaskStatus(
+        123,
+        TaskStatus.DONE,
+        new User(),
+      );
+      expect(updatedTask.status).toBe(TaskStatus.DONE);
+      expect(save).toHaveBeenCalled();
+    });
+  });
 });

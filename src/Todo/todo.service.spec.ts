@@ -1,56 +1,85 @@
 import { Test, TestingModule } from '@nestjs/testing';
-
 import { TodoService } from './todo.service';
-import { AppModule } from '../app.module';
-import { AuthService } from '../auth/auth.service';
+import { TodoRepository } from './todo.repository';
+import { NotFoundException } from '@nestjs/common';
 import { User } from '../auth/user.entity';
+import { CreateTodoDTO } from './todoDto/dto';
 
-describe('ToDoListService', () => {
-  let service: TodoService;
-  let authService: AuthService;
-  let todoId: number;
-  let user: User;
+const mockTodoRepository = () => ({
+  find: jest.fn(),
+  createTodo: jest.fn(),
+  update: jest.fn(),
+});
+
+describe('TodoService', () => {
+  let todoService: TodoService;
+  let todoRepository;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
+      providers: [
+        TodoService,
+        { provide: TodoRepository, useFactory: mockTodoRepository },
+      ],
     }).compile();
 
-    service = module.get<TodoService>(TodoService);
-    authService = module.get<AuthService>(AuthService);
-
-    // user = await authService.signUp({
-    //   firstname: 'john',
-    //   lastname: 'doe',
-    //   username: 'janedoe',
-    //   password: 'Password@1',
-    // });
+    todoService = module.get<TodoService>(TodoService);
+    todoRepository = module.get<TodoRepository>(TodoRepository);
   });
 
-  it('should be defined', () => {
-    expect(service).toBeDefined();
+  describe('getAllTodo', () => {
+    it('should return all todos for the logged-in user', async () => {
+      const user = new User();
+      user.id = 1;
+      const todoResult = [{ id: 1, title: 'Test Todo', user }];
+      todoRepository.find.mockResolvedValue(todoResult);
+
+      const result = await todoService.getAllTodo(user);
+      expect(result).toEqual(todoResult);
+      expect(todoRepository.find).toHaveBeenCalledWith({
+        where: { user: user.id },
+      });
+    });
   });
 
-//   it('should create a todo list', async () => {
-//     const todo = await service.createTodo(
-//       {
-//         name: 'work',
-//       },
-//       user,
-//     );
+  describe('createTodo', () => {
+    it('should successfully create a todo', async () => {
+      const user = new User();
+      user.id = 1;
+      const createTodoDTO = new CreateTodoDTO();
+      createTodoDTO.title = 'New Todo';
 
-//     expect(todo).toBeDefined();
-//     todoId = todo.id;
-//   });
+      const savedTodo = { ...createTodoDTO, id: 1, user };
+      todoRepository.createTodo.mockResolvedValue(savedTodo);
 
-//   it('should get all todo lists', async () => {
-//     const todo = await service.getAllTodo(user);
+      const result = await todoService.createTodo(createTodoDTO, user);
+      expect(result).toEqual(savedTodo);
+      expect(todoRepository.createTodo).toHaveBeenCalledWith(
+        createTodoDTO,
+        user,
+      );
+    });
+  });
 
-//     expect(todo).toBeDefined();
-//     expect(todo.length).toBeGreaterThan(0);
-//   });
+  describe('deleteTodo', () => {
+    it('should successfully delete a todo', async () => {
+      const user = new User();
+      user.id = 1;
+      todoRepository.update.mockResolvedValue({ affected: 1 });
 
-//   it('should delete todo list', async () => {
-//     await service.deleteTodo(todoId, user);
-//   });
+      await todoService.deleteTodo(1, user);
+      expect(todoRepository.update).toHaveBeenCalledWith(
+        { id: 1, user: { id: user.id }, is_deleted: false },
+        { is_deleted: true },
+      );
+    });
+
+    it('should throw NotFoundException if todo does not exist', async () => {
+      todoRepository.update.mockResolvedValue({ affected: 0 });
+
+      await expect(todoService.deleteTodo(1, new User())).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
 });

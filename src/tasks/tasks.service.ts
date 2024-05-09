@@ -12,7 +12,7 @@ export class TasksService {
   constructor(
     @InjectRepository(TaskRepository)
     private taskRepository: TaskRepository,
-  ) { }
+  ) {}
 
   async getTasks(getTasksDTO: GetTasksFilterDTO, user: User): Promise<Task[]> {
     return await this.taskRepository.getTasks(getTasksDTO, user);

@@ -1,75 +1,100 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo_text.svg" width="320" alt="Nest Logo" /></a>
-</p>
+# Todo list Backend Task
 
-[travis-image]: https://api.travis-ci.org/nestjs/nest.svg?branch=master
-[travis-url]: https://travis-ci.org/nestjs/nest
-[linux-image]: https://img.shields.io/travis/nestjs/nest/master.svg?label=linux
-[linux-url]: https://travis-ci.org/nestjs/nest
-  
-  <p align="center">A progressive <a href="http://nodejs.org" target="blank">Node.js</a> framework for building efficient and scalable server-side applications, heavily inspired by <a href="https://angular.io" target="blank">Angular</a>.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore"><img src="https://img.shields.io/npm/dm/@nestjs/core.svg" alt="NPM Downloads" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://api.travis-ci.org/nestjs/nest.svg?branch=master" alt="Travis" /></a>
-<a href="https://travis-ci.org/nestjs/nest"><img src="https://img.shields.io/travis/nestjs/nest/master.svg?label=linux" alt="Linux" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#5" alt="Coverage" /></a>
-<a href="https://gitter.im/nestjs/nestjs?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=body_badge"><img src="https://badges.gitter.im/nestjs/nestjs.svg" alt="Gitter" /></a>
-<a href="https://opencollective.com/nest#backer"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec"><img src="https://img.shields.io/badge/Donate-PayPal-dc3d53.svg"/></a>
-  <a href="https://twitter.com/nestframework"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+- Todo app sets you up for success by helping you manage, prioritize, and complete your goals and tasks
 
-## Description
+---
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Requirements
 
-## Installation
+For development, you will only need Node.js (version 14 and above) and a node global package installed in your environment.
 
-```bash
-$ npm install
-```
+### Node
 
-## Running the app
+- #### Node installation on Windows
 
-```bash
-# development
-$ npm run start
+  Just go on [official Node.js website](https://nodejs.org/) and download the installer.
+  Also, be sure to have `git` available in your PATH, `npm` might need it (You can find git [here](https://git-scm.com/)).
 
-# watch mode
-$ npm run start:dev
+## Application Project Installation
 
-# production mode
-$ npm run start:prod
-```
+    $ git clone https://github.com/heyubani/todo_task
+    $ cd todo_task
+    $ npm install
 
-## Test
+---
 
-```bash
-# unit tests
-$ npm run test
+## Configure app
 
-# e2e tests
-$ npm run test:e2e
+create a `.env` file to the root folder then add url to your db to connect your postgres DBs.
+An example of the structure of the `.env` is seen in `.env.example` file.
 
-# test coverage
-$ npm run test:cov
-```
+---
 
-## Support
+## Start server locally
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+run this script in your code terminal
 
-## Stay in touch
+    $ npm run start:dev
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+---
 
-## License
+## Project Structure
 
-  Nest is [MIT licensed](LICENSE).
+The folder structure of this app is explained below:
+
+| Name              | Description                                                                       |
+| ----------------- | --------------------------------------------------------------------------------- |
+| **node_modules**  | Contains all npm dependencies                                                     |
+| **src**           | Contains queries, services, middlewares, controllers and routes for all endpoints |
+| **config**        | Contains application configurations including environment-specific configurations |
+| **services**      | Contains functions connecting to external services being used                     |
+| **main.ts**       | Entry point to express app                                                        |
+| **tests**         | Contains all integration and unit test codes                                      |
+| **eslintrc.json** | Config settings for eslint code style checking                                    |
+| **database.json** | Contains databases url                                                            |
+| **package.json**  | Contains npm dependencies as well as build scripts                                |
+| **README.md**     | Contains details on how to setup the project locally and the codebase overview    |
+| **.env.example**  | Contains keys of the necessary environment variables needed in the .env file      |
+| **.gitignore**    | Contains files and folders that github should ignore when pushing code to github  |
+
+---
+
+## Running the scripts
+
+All the different build steps are arranged via npm scripts.
+Npm scripts basically allow us to call (and chain) terminal commands via npm.
+
+| Npm Script | Description |
+| ---------- | ----------- |
+
+|
+| `dev` | starts the server in the local development environment. Can be invoked with `npm run start:dev` |
+| `prestart` | Runs the up migration if any yet to be run when `npm run start` is invoked |
+| `start` | starts the server in the staging or production environment. Can be invoked with `npm run start` |
+| `pretest` | Runs a series of scripts that prepared the test DB for the test about to run when `npm run test` is invoked |
+| `test` | Runs tests using mocha. Can be invoked with `npm run test` |
+| `build` | Runs to generate the build file into a dist folder using babel |
+
+---
+
+## Postman API Documentation
+
+    $ https://documenter.getpostman.com/view/14594801/2sA3JM61CL
+---
+
+## Technologies
+
+- NodeJS
+- ExpressJS
+- TypeScript
+- Postman
+- NestJs
+- MySql
+
+---
+
+## Copyright
+
+Copyright (c) 2024 Miracle
+
+---
