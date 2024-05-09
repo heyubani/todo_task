@@ -33,7 +33,7 @@ export class TasksController {
     @GetUser() user: User,
   ) {
     const data = await this.tasksService.getTasks(filterDTO, user);
-    return successResponse(200, 'Users list successfully fetched', data);
+    return successResponse(200, 'Task list fetched successfully', data);
   }
 
   @Get(':id')
